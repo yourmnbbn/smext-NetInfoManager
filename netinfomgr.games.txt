@@ -1,0 +1,71 @@
+"Games"
+{
+    "csgo"
+    {
+        "Addresses"
+        {
+            "host_framestarttime_stddeviation"
+            {
+                "signature" "CBaseClient::SendSnapshot"
+
+                "windows"
+                {
+                    "read"  "284"
+                }
+
+                "linux"
+                {
+                    "read"  "307"
+                }
+            }
+
+            "host_frametime_stddeviation"
+            {
+                "signature" "CBaseClient::SendSnapshot"
+                
+                "windows"
+                {
+                    "read"  "292"
+                }
+
+                "linux"
+                {
+                    "read"  "322"
+                }
+            }
+
+            "host_frameendtime_computationduration"
+            {
+                "signature" "CBaseClient::SendSnapshot"
+                
+                "windows"
+                {
+                    "read"  "300"
+                }
+
+                "linux"
+                {
+                    "read"  "331"
+                }
+            }
+        }
+
+        "Signatures"
+        {
+            "CBaseClient::SendSnapshot"     //Str:"%s can't find frame from tick %d"
+            {
+                "library"   "engine"
+                "windows"   "\x55\x8B\xEC\x83\xE4\xF8\x81\xEC\xA4\x00\x00\x00\x53\x56"
+                "linux"     "\x55\x89\xE5\x57\x56\x53\x81\xEC\xEC\x00\x00\x00\x8B\x75\x0C\x8B\x5D\x08"
+            }
+
+            "Host_RunFrame" //Str:"host_profile : %i clients, %.1f msec, %.1f fps\n"
+            {
+                "library"   "engine"
+                "windows"   "\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x2A\x2A\x2A\x2A\x00\x56"
+                "linux"     "\x55\x89\xE5\x56\x53\x83\xEC\x60\xC6\x05\x2A\x2A\x2A\x2A\x00"
+
+            }
+        }
+    }
+}
