@@ -30,7 +30,7 @@
  */
 
 #include "extension.h"
-#include "subhook/subhook.h"
+#include <CDetour/detours.h>
 
 /**
  * @file extension.cpp
@@ -40,29 +40,21 @@
 NetInfoMgr g_NetInfoMgr;		/**< Global singleton for extension's main interface */
 SMEXT_LINK(&g_NetInfoMgr);
 
-IGameConfig* g_pGameConfig = nullptr;
-IForward* g_pOnFrameDataUpdatedForward = nullptr;
-subhook::Hook* g_HostRunFrameHook;
-
-#ifdef _WIN32
-    #define HOOK_OFFSET 0xCC
-#else
-    #define HOOK_OFFSET 0X188
-#endif
-
-void* g_pHostRunFrame;
+CDetour*        g_pHostRunFrame;
+IGameConfig*    g_pGameConfig = nullptr;
+IForward*       g_pOnFrameDataUpdatedForward = nullptr;
 
 float* host_frameendtime_computationduration = nullptr;
 float* host_frametime_stddeviation = nullptr;
 float* host_framestarttime_stddeviation = nullptr;
 
-void __cdecl OnFrameDataUpdated()
+void OnFrameDataUpdated()
 {
     const float flRatio = 1000.0;
 
-	float frameendtime_computationduration = *host_frameendtime_computationduration*flRatio;
-	float frametime_stddeviation = *host_frametime_stddeviation*flRatio;
-	float framestarttime_stddeviation = *host_framestarttime_stddeviation*flRatio;
+    float frameendtime_computationduration = *host_frameendtime_computationduration*flRatio;
+    float frametime_stddeviation = *host_frametime_stddeviation*flRatio;
+    float framestarttime_stddeviation = *host_framestarttime_stddeviation*flRatio;
 
     cell_t result;
     g_pOnFrameDataUpdatedForward->PushFloatByRef(&frameendtime_computationduration);
@@ -79,21 +71,20 @@ void __cdecl OnFrameDataUpdated()
 }
 
 
-__declspec(naked) void HostRunFrameHookHandler()
-{
-    __asm call OnFrameDataUpdated
-
 #ifdef _WIN32
-    __asm pop esi 
-    __asm mov esp, ebp 
-#else
-    __asm add esp, 0x60
-    __asm pop ebx 
-    __asm pop esi 
-#endif
-    __asm pop ebp 
-    __asm _emit 0xC3
+DETOUR_DECL_STATIC0(HostRunFrame, void)
+{
+    DETOUR_STATIC_CALL(HostRunFrame)();
+    OnFrameDataUpdated();
 }
+#else
+DETOUR_DECL_STATIC1(HostRunFrame, uint32_t, uint32_t, arg0)
+{
+    int ret = DETOUR_STATIC_CALL(HostRunFrame)(arg0);
+    OnFrameDataUpdated();
+    return ret;
+}
+#endif 
 
 bool NetInfoMgr::SDK_OnLoad(char *error, size_t maxlen, bool late)
 {
@@ -101,12 +92,6 @@ bool NetInfoMgr::SDK_OnLoad(char *error, size_t maxlen, bool late)
     if(!gameconfs->LoadGameConfigFile("netinfomgr.games", &g_pGameConfig, sConfError, sizeof(sConfError)))
     {
         snprintf(error, maxlen, "Could not read netinfomgr.games : %s", sConfError);
-        return false;
-    }
-
-    if (!g_pGameConfig->GetMemSig("Host_RunFrame", &g_pHostRunFrame) || !g_pHostRunFrame)
-    {
-        snprintf(error, maxlen, "Failed to lookup Host_RunFrame signature.");
         return false;
     }
 
@@ -131,9 +116,18 @@ bool NetInfoMgr::SDK_OnLoad(char *error, size_t maxlen, bool late)
         return false;
     }
 
-    g_HostRunFrameHook = new subhook::Hook((void*)((uintptr_t)g_pHostRunFrame + HOOK_OFFSET), (void*)HostRunFrameHookHandler);
-    g_HostRunFrameHook->Install();
+    //Detour
+    CDetourManager::Init(smutils->GetScriptingEngine(), g_pGameConfig);
 
+    g_pHostRunFrame = DETOUR_CREATE_STATIC(HostRunFrame, "Host_RunFrame");
+    if(!g_pHostRunFrame)
+    {
+        snprintf(error, maxlen, "Host_RunFrame detour could not be initialized ");
+        return false;
+    }
+    g_pHostRunFrame->EnableDetour();
+
+    //Forwards
     g_pOnFrameDataUpdatedForward = forwards->CreateForward("NIM_OnFrameDataUpdated", ET_Hook, 3, NULL, Param_FloatByRef, Param_FloatByRef, Param_FloatByRef);
     
     sharesys->RegisterLibrary(myself, "netinfomgr");
@@ -142,6 +136,8 @@ bool NetInfoMgr::SDK_OnLoad(char *error, size_t maxlen, bool late)
 
 void NetInfoMgr::SDK_OnUnload()
 {
-    g_HostRunFrameHook->Remove();
     gameconfs->CloseGameConfigFile(g_pGameConfig);
+
+    if(g_pHostRunFrame)
+        g_pHostRunFrame->DisableDetour();
 }
