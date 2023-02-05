@@ -40,7 +40,7 @@
 /* Basic information exposed publicly */
 #define SMEXT_CONF_NAME			"Net info manager"
 #define SMEXT_CONF_DESCRIPTION	"Manage sv, sv diviation and var value"
-#define SMEXT_CONF_VERSION		"1.0.0"
+#define SMEXT_CONF_VERSION		"1.1.0"
 #define SMEXT_CONF_AUTHOR		"Yourmnbbn"
 #define SMEXT_CONF_URL			"https://github.com/yourmnbbn"
 #define SMEXT_CONF_LOGTAG		"NetInfoMgr"
