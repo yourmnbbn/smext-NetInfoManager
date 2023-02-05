@@ -15,7 +15,7 @@
 
                 "linux"
                 {
-                    "read"  "307"
+                    "read"  "393"
                 }
             }
 
@@ -30,7 +30,7 @@
 
                 "linux"
                 {
-                    "read"  "322"
+                    "read"  "401"
                 }
             }
 
@@ -45,7 +45,7 @@
 
                 "linux"
                 {
-                    "read"  "331"
+                    "read"  "409"
                 }
             }
         }
@@ -56,14 +56,14 @@
             {
                 "library"   "engine"
                 "windows"   "\x55\x8B\xEC\x83\xE4\xF8\x81\xEC\xA4\x00\x00\x00\x53\x56"
-                "linux"     "\x55\x89\xE5\x57\x56\x53\x81\xEC\xEC\x00\x00\x00\x8B\x75\x0C\x8B\x5D\x08"
+                "linux"     "\x55\x89\xE5\x57\x56\x53\x81\xEC\x0C\x01\x00\x00\x8B\x55\x0C"
             }
 
             "Host_RunFrame" //Str:"host_profile : %i clients, %.1f msec, %.1f fps\n"
             {
                 "library"   "engine"
                 "windows"   "\x55\x8B\xEC\x83\xEC\x14\x80\x3D\x2A\x2A\x2A\x2A\x00\x56"
-                "linux"     "\x55\x89\xE5\x56\x53\x83\xEC\x60\xC6\x05\x2A\x2A\x2A\x2A\x00"
+                "linux"     "\x55\x89\xE5\x57\x56\x53\x83\xEC\x2C\x8B\x35\x2A\x2A\x2A\x2A\xC6\x05\x2A\x2A\x2A\x2A\x00"
 
             }
         }
